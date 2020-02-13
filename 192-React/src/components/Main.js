@@ -12,6 +12,8 @@ of the Philippines, Diliman for the AY 2019-
 1/20/20: Annysia Dupaya - Created component, linked with other components
 1/25/20: Annysia Dupaya - Integrated API
 1/29/20: Dylan Bayona - Reviewed code
+2/6/20: Annysia Dupaya - Added ToastContainer
+2/12/20: Dylan Bayona - Reviewed code
 
 ---ABOUT---
 File creation date: 1/20/20
@@ -31,6 +33,7 @@ import Navbar from './Navbar';
 import AddEatery from './AddEatery';
 import AllEateries from './AllEateries';
 import Footer from './Footer';
+
 class Main extends Component{
     /* ---METHOD---
     Name: constructor
@@ -44,11 +47,16 @@ class Main extends Component{
         super(props);
         this.state={
             eateries:[]
-        };
+        };  
         this.handleEaterySubmit = this.handleEaterySubmit.bind(this)
         this.addNewEatery = this.addNewEatery.bind(this)
+        this.flagCheck = this.flagCheck.bind(this)
+
     }
-    
+    flagCheck(){
+        console.log("iscalled");
+        window.location.reload(true);
+    }
     /* ---METHOD---
     Name: handleEaterySubmit
     Routine creation date: 1/20/20
@@ -58,7 +66,6 @@ class Main extends Component{
     Return value: JSON response
     */
     handleEaterySubmit(name, address, contact){
-        console.log("name: "+name + " address:" + address + " contact: " + contact)
         /* ---VARIABLE---
         body; contains the name, address, and contact info of the eatery 
         */
@@ -71,7 +78,9 @@ class Main extends Component{
         .then((eatery)=>{
             this.addNewEatery(eatery)
         })
+        
     }
+
     
     /* ---METHOD---
     Name: addNewEatery
@@ -95,8 +104,8 @@ class Main extends Component{
     List of required files/database tables: N/A
     Return value: JSON response
     */
-    componentDidMount(){
-        fetch('http://localhost:5000/eatery')
+    async componentDidMount(){
+       await fetch('http://localhost:5000/eatery')
       .then((response) => {return response.json()})
       .then((data) => {this.setState({ eateries: data }) });
     }
@@ -117,7 +126,7 @@ class Main extends Component{
                     <Switch>
                         <Route exact path="/" component={Landing}/>
                         <Route path="/eatery">
-                            <AllEateries eateries={this.state.eateries}/>
+                            <AllEateries flagCheck = {this.flagCheck} eateries={this.state.eateries}/>
                         </Route>
                         <Route path="/add-eatery">
                             <AddEatery handleEaterySubmit={this.handleEaterySubmit}/>
