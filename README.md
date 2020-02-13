@@ -6,6 +6,12 @@ This repository contains the React Frontend and Flask Backend code
 
 To run the application, open the terminal in the 192-React directory
 
+Install all of the dependencies with npm
+
+```
+npm install
+```
+
 Use npm to start the application
 
 ```
