@@ -28,7 +28,9 @@ import TextField from '@material-ui/core/TextField';
 import { makeStyles } from '@material-ui/core/styles';
 import InputLabel from '@material-ui/core/InputLabel';
 import Select from '@material-ui/core/Select';
-
+import Box from '@material-ui/core/Box'
+import '../stylesheets/AddEatery.css';
+import Typography from '@material-ui/core/Typography';
 
 /* ---METHOD---
 Name: useStyles
@@ -70,6 +72,9 @@ const AddEatery = (props) =>{
      */
      let formFields = {}
      return (
+          <div className="AddEatery">
+          <Typography variant="h3">Create an Eatery</Typography>
+          <hr/>
           <form className ={classes.root} noValidate autoComplete="off" 
           onSubmit={(e)=> {props.handleEaterySubmit(formFields.name.value,
                formFields.address.value, 
@@ -145,6 +150,7 @@ const AddEatery = (props) =>{
                  </div>
                  <button className="ui primary button"type="submit">Submit</button>
         </form>
+        </div>
     );
 }
 

@@ -26,13 +26,17 @@ import React, { Component } from 'react'
 import {
     BrowserRouter as Router,
     Switch,
-    Route
+    Route,
+    withRouter,
+    Redirect
   } from "react-router-dom";
 import Landing from './Landing'
 import Navbar from './Navbar';
 import AddEatery from './AddEatery';
 import AllEateries from './AllEateries';
 import Footer from './Footer';
+import SearchResults from './SearchResults';
+import Admin from './Admin';
 
 class Main extends Component{
     /* ---METHOD---
@@ -46,16 +50,29 @@ class Main extends Component{
     constructor (props){
         super(props);
         this.state={
-            eateries:[]
-        };  
+            eateries:[],
+            searchResults:[],
+            searchWord:'',
+            flaggedReviews:[],
+            redirect: false
+        }; 
         this.handleEaterySubmit = this.handleEaterySubmit.bind(this)
         this.addNewEatery = this.addNewEatery.bind(this)
         this.flagCheck = this.flagCheck.bind(this)
+        this.SearchMain = this.SearchMain.bind(this)
 
     }
     flagCheck(){
         console.log("iscalled");
         window.location.reload(true);
+    }
+    SearchMain=(val)=>{
+
+        fetch('http://localhost:5000/search/'+val)
+        .then((response) => {return response.json()})
+        .then((data) => {this.setState({ searchResults: data,
+        searchWord:val,
+        redirect:true }); });
     }
     /* ---METHOD---
     Name: handleEaterySubmit
@@ -108,6 +125,9 @@ class Main extends Component{
        await fetch('http://localhost:5000/eatery')
       .then((response) => {return response.json()})
       .then((data) => {this.setState({ eateries: data }) });
+      fetch('http://localhost:5000/review/flagged')
+      .then((response)=>{return response.json()})
+      .then((data)=>{this.setState({flaggedReviews:data})})
     }
     
     /* ---METHOD---
@@ -119,10 +139,16 @@ class Main extends Component{
     Return value: rendered page
     */    
     render(){
+        const redirect= this.state.redirect;
+        if (redirect === true) {
+            this.setState({redirect:false})
+            return <Redirect to="/search" />
+            
+        }
         return (
             <div className="Main">
-                <Router>
-                    <Navbar/>
+                <Router >
+                    <Navbar SearchMain = {this.SearchMain}/>
                     <Switch>
                         <Route exact path="/" component={Landing}/>
                         <Route path="/eatery">
@@ -131,6 +157,12 @@ class Main extends Component{
                         <Route path="/add-eatery">
                             <AddEatery handleEaterySubmit={this.handleEaterySubmit}/>
                         </Route>
+                        <Route path="/search">
+                            <SearchResults searchResults={this.state.searchResults} searchWord = {this.state.searchWord}/>
+                        </Route>
+                        <Route path="/admin">
+                            <Admin eateries={this.state.eateries} flaggedReviews={this.state.flaggedReviews}/>
+                        </Route>
                     </Switch>
                     <Footer/>
                 </Router>
@@ -138,4 +170,4 @@ class Main extends Component{
         )
     }
 }
-export default Main
+export default withRouter(Main);

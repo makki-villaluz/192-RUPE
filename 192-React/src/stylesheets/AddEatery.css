@@ -1,0 +1,10 @@
+.AddEatery{
+    text-align:center;
+    margin:1em 5em;
+    padding:2em;
+    border: 2px solid black;
+    display:inline-block;
+}
+.field{
+    margin:1em;
+}

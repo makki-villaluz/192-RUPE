@@ -15,11 +15,17 @@ of the Philippines, Diliman for the AY 2019-
 1/30/20 John Matthew L. Villaluz - Added get_eatery endpoint
                                  - Added Documentation
 2/9/20 John Matthew L. Villaluz - Optmized queries
-                                - Added delete_eatery, update_eatery, flag_eatery,      unflag_eatery, delete_review, flag_review,            unflag_review
+                                - Added delete_eatery, update_eatery, flag_eatery, 
+                                  unflag_eatery, delete_review, flag_review,
+                                  unflag_review endpoints
                                 - Added Documentation
 2/12/20 John Matthew L. Villaluz - Fixed bug related to the flagged reviews's ratings
                                    being reflected in the eatery rating
                                  - Added Documentation
+2/22/20 John Matthew L. Villaluz - Added get_flagged_reviews, search_eatery endpoints
+                                 - Added Documentation
+2/26/20 John Matthew L. Villaluz - Fixed bug with unflagged reviews being returned
+                                   in get_flagged_reviews
 
 ---ABOUT---
 Created: 1/20/20
@@ -34,19 +40,27 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow 
 from flask_cors import CORS, cross_origin
 import os 
+import flask_whooshalchemy as wa 
+from whoosh.analysis import StemmingAnalyzer
 
 # File Initializations
 app = Flask(__name__) # creates the flask app 
 CORS(app) # enables cross origin resource sharing
 basedir = os.path.abspath(os.path.dirname(__file__)) # sets up the path for the sqlite database
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'db.sqlite') # configures sqlite database
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # removes sqlite warnings
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True  # allows whooshalchemy to see sql modificaitons
+app.config['WHOOSH_INDEX_PATH'] = 'whoosh' # sets directory for whoosh
+app.config['WHOOSH_ANALYZER'] = 'StemmingAnalyzer' # sets analyzer for whoosh 
 
 db = SQLAlchemy(app) # creates database object
 ma = Marshmallow(app) # creates schema object
 
 # Database Models
 class Eatery(db.Model):
+     __tablename__ = 'eatery'
+     __searchable__ = ['name', 'address']
+     __analyzer__ = StemmingAnalyzer()
+
      id = db.Column(db.Integer, primary_key=True) # primary key of the eatery table
      name = db.Column(db.String(256), nullable=False) # name of the eatery
      address = db.Column(db.String(256), nullable=False, default='Unknown') # address of the eatery
@@ -112,6 +126,8 @@ class Review(db.Model):
      """
      def __repr__(self): 
           return 'Review ' + str(self.id)
+
+wa.search_index(app, Eatery)
 
 # Schema For Sending Json Data
 class EaterySchema(ma.Schema):
@@ -347,6 +363,8 @@ Return Value: flagged review in json format
 def flag_review(e_id, r_id):
      eatery = Eatery.query.get(e_id) # query eatery of the review
      review = Review.query.get(r_id) # query review to be flagged
+
+     print(review)
  
      review.flag = True # set flag to true
      review.flagged_before = True # set flagged_before to true
@@ -401,6 +419,45 @@ def unflag_review(e_id, r_id):
      db.session.commit() #save changes to the database
 
      return review_schema.jsonify(review)
+
+"""
+Method Name: get_flagged_reviews
+Creation: 2/22/20
+Purpose http get request for all flagged eateries 
+Arguments: none
+Required Tables: review
+Return Value: all flagged reviews in json format 
+"""
+@app.route('/review/flagged', methods=['GET'])
+def get_flagged_reviews():
+     reviews = Review.query.all() # query all reviews
+     r = [] # list of all flagged reviews
+
+     for i in reviews: # go through every review
+          if i.flag == True: # add to list if flagged
+               r.append(i)
+
+     return reviews_schema.jsonify(r)
+
+# Endpoints For Search Related Data
+"""
+Method Name: search_eatery
+Creation: 2/22/20
+Purpose http get request to search for an eatery 
+Arguments: query
+Required Tables: eatery 
+Return Value: related eateries in json format 
+"""
+@app.route('/search/<string:query>', methods=['GET'])
+def search_eatery(query):
+     results = Eatery.query.search(query, limit=10).all() # search all eateries related to query
+     r = [] # list of related searches
+
+     for i in results: # go through every related Eatery
+          if i.flag == False: # add to list if not flagged
+               r.append(i)
+
+     return eateries_schema.jsonify(r)
 
 if __name__ == '__main__':
      app.run(debug=True)
